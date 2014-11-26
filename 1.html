@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+        <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0">
+        <style type="text/css">
+            body{ -ms-touch-action:none;}
+            .touched{ height: 100px; width: 100px; border: 1px solid red; border-radius: 50px; position: absolute; top: 0; left: 0; opacity: 0}
+        </style>
+    </head>
+    <body>
+        <div>TODO write content</div>
+        <script type="text/javascript">
+            var TRANSITION_END = "webkitTransitionEnd",
+                TRANSITION_CSS = "-webkit-transiton",
+                TRANSFORM_CSS = "-webkit-transform",
+                TRANSFORM = "webkitTransform",
+                TRANSITION = "webkitTransition";
+            if(document.body.style.transform){
+                TRANSITION_END = "transitionEnd";
+                TRANSITION_CSS = "transiton";
+                TRANSFORM_CSS = "transform";
+                TRANSFORM = "transform";
+                TRANSITION = "transition";
+            }
+            
+            var touches = {};
+            
+            function MyTouch(id){
+                this.id = id;
+                var touchee = document.createElement("div");
+                touchee.className = "touched";
+                touchee.style.opacity = 0;
+                touchee.id = id;
+                touchee.addEventListener(TRANSITION_END, function(){
+                    touchee.style[TRANSFORM] = "";
+                });
+                document.body.appendChild(touchee);
+                this.node = touchee;
+            }
+            
+            MyTouch.prototype.setPos = function(posX, posY){
+                this.node.style.opacity = 1;
+                var x = Math.round(posX - 50) + "px";
+                var y = Math.round(posY - 50) + "px";
+                this.node.style[TRANSFORM] = "translate3d(" + x + "," + y + ",0)";
+            }
+            
+            MyTouch.prototype.destroy = function(){
+                this.fade();
+                var node = this.node, id = this.id;
+                window.setTimeout(function(){
+                    node.parentNode && node.parentNode.removeChild(node);
+                    delete(touches[id]);
+                    console.log("remove and destroy");
+                }, 1000);
+            }
+            
+            MyTouch.prototype.fade = function(){
+                this.node.style[TRANSITION] = "opacity .5s ease-in-out";
+                this.node.style.opacity = 0;
+            }
+            
+            function kill(id){
+                touches[id] && touches[id].destroy();
+            }
+            
+            function reaper(){
+                var id;
+                for( id in touches ){
+                    kill(id);
+                }
+            }
+            
+            document.addEventListener("touchstart", function(e){
+                e.preventDefault();
+                var len = e.touches.length, thistouch;
+                for( var i = 0; i < len; i++ ){
+                    thistouch = e.touches[i];
+                    touches[thistouch.identifier] = new MyTouch(thistouch.identifier);
+                    touches[thistouch.identifier].setPos( thistouch.pageX, thistouch.pageY );
+                }
+            });
+            
+//            document.addEventListener("MSPointerDown", function(e){
+//                touches[e.pointerId] = new MyTouch(e.pointerId);
+//                touches[e.pointerId].setPot(e.clientX, e.clientY);
+//            });
+            
+            function mover(e){
+                e.preventDefault();
+                var len = e.touches.length, thistouch;
+                for( var i = 0; i < len; i++ ){
+                    thistouch = e.touches[i];
+                    if(!touches[thistouch.identifier]){
+                        touches[thistouch.identifier] = new MyTouch(thistouch.identifier);
+                        console.log("in mover : " + thistouch.identifier);
+                    }
+                    touches[thistouch.identifier].setPos( thistouch.pageX, thistouch.pageY );
+                }
+            }
+            
+            document.addEventListener("touchmove", mover);
+//            
+//            function moverMS(e){
+//                if(!touches[e.pointerId]){
+//                    touches[e.pointerId] = new MyTouch(e.pointerId);
+//                }
+//                rescue(e.pointerId);
+//                touches[e.pointerId].setPos(e.clientX, e.clientY);
+//            }
+            
+            var reap;
+            function touchend(e){
+                window.clearTimeout(reap);
+                for( var i = 0; i < e.changedTouches.length; i++ ){
+                    kill(e.changedTouches[i].identifier);
+                }
+                reap = window.setTimeout(reaper, 10);
+            }
+            document.addEventListener("touchend", touchend);
+            document.addEventListener("touchcancel", touchend);
+            
+//            function touchendMS(e){
+//                window.clearTimeout(reap);
+//                kill(e.pointerId);
+//                reap = window.setTimeout(reaper, 100);
+//            }
+//            
+//            document.addEventListener("MSPointerUp", touchendMS);
+        </script>
+    </body>
+</html>
